@@ -1,8 +1,8 @@
 pub mod error;
-mod rules;
+pub mod rules;
 
-use std::cell::{Cell, RefCell};
 use std::collections::HashSet;
+use std::cell::{Cell, RefCell};
 
 use error::PdaError;
 
@@ -15,7 +15,7 @@ pub enum PdaStateType {
 pub type PdaState = (char, PdaStateType);
 
 #[derive(Debug)]
-struct PdaTransition {
+pub struct PdaTransition {
     curr_state: PdaState,
     input: char,
     top: char,
@@ -24,23 +24,23 @@ struct PdaTransition {
 }
 
 #[derive(Debug)]
-pub struct PdaRules {
-    input_symbols: HashSet<char>,
-    stack_symbols: HashSet<char>,
-    states: Vec<PdaState>,
-    start_state: PdaState,
-    transitions: Vec<PdaTransition>,
+pub struct PdaRules<'a> {
+    pub input_symbols: HashSet<char>,
+    pub stack_symbols: HashSet<char>,
+    pub states: Vec<PdaState>,
+    pub start_state: &'a PdaState,
+    pub transitions: Vec<PdaTransition>,
 }
 
 #[derive(Debug)]
-pub struct Pda {
-    rules: PdaRules,
+pub struct Pda<'a> {
+    rules: PdaRules<'a>,
     current_state: Cell<PdaState>,
     stack: RefCell<Vec<char>>,
 }
 
-impl Pda {
-    pub fn new(rules: PdaRules) -> Pda {
+impl<'a> Pda<'a> {
+    pub fn new(rules: &PdaRules) -> Pda<'a> {
         unimplemented!()
     }
 

@@ -31,11 +31,27 @@ impl fmt::Display for PdaError {
 impl Error for PdaError {}
 
 #[derive(Debug)]
-pub enum PdaRulesError {}
+pub enum PdaRulesError {
+    RulesParserFailed(String),
+    InvalidRule(String),
+}
 
 impl fmt::Display for PdaRulesError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        unimplemented!()
+        let error_type_name = "pda rules error";
+
+        match self {
+            PdaRulesError::RulesParserFailed(message) => {
+                write!(
+                    f,
+                    "{}: failed to parse rules script: {}",
+                    error_type_name, message
+                )
+            }
+            PdaRulesError::InvalidRule(message) => {
+                write!(f, "{}: invalid rule: {}", error_type_name, message)
+            }
+        }
     }
 }
 

@@ -41,7 +41,7 @@ impl PdaRules {
 
             if stack_symbols.is_empty() {
                 return Err(PdaRulesError::InvalidRule(
-                    "empty input symbols set".to_string(),
+                    "empty stack symbols set".to_string(),
                 ));
             }
 
@@ -58,7 +58,7 @@ impl PdaRules {
                         .as_bool()
                         .expect("invalid state symbol definition format");
                     if symbol.len() != 1 {
-                        panic!("invalid state symbol format".to_string());
+                        panic!("invalid state symbol format");
                     }
 
                     (symbol.chars().nth(0).unwrap(), accepting)
@@ -66,7 +66,7 @@ impl PdaRules {
                 .collect();
 
             for (i, &state) in raw_states.iter().enumerate() {
-                if raw_states.iter().skip(i).any(|&(s, _)| s == state.0) {
+                if raw_states.iter().skip(i + 1).any(|&(s, _)| s == state.0) {
                     return Err(PdaRulesError::RulesParserFailed(format!(
                         "'{}' state redefinition",
                         state.0
@@ -93,87 +93,68 @@ impl PdaRules {
 
             let start_state: PdaState = start_state_str.chars().nth(0).unwrap();
 
-            if states.contains(&start_state) {
+            if !states.contains(&start_state) {
                 return Err(PdaRulesError::InvalidRule(
                     "unknown start state".to_string(),
                 ));
             };
 
             /* Transitions */
-            let transitions: Vec<PdaTransition> = json_values["transions"]
+            let transitions: Vec<PdaTransition> = json_values["transitions"]
                 .as_array()
                 .expect("invalid transinions definition format")
                 .iter()
                 .map(|transition| {
-                    let curr_state = transition["curr_state"].as_str().expect(format!(
-                        "invalid current state in transition definition {}",
-                        transition
-                    ));
-                    let input = transition["input"].as_str().expect(format!(
-                        "invalid input in transition definition {}",
-                        transition
-                    ));
+                    /* Parse transition fields */
+                    let curr_state = transition["curr_state"].as_str().expect(
+                        format!("invalid curr state in transition {}", transition).as_str(),
+                    );
+                    let input = transition["input"]
+                        .as_str()
+                        .expect(format!("invalid input in transition {}", transition).as_str());
                     let top = if transition["top"].is_string() {
                         Some(transition["top"].as_str().unwrap())
                     } else if transition["top"].is_null() {
                         None
                     } else {
-                        panic!(format!(
-                            "invalid stack top in transition definition {}",
-                            transition
-                        ))
+                        panic!("invalid stack top in transition {}", transition);
                     };
-                    let dest_state = transition["dest_state"].as_str().expect(format!(
-                        "invalid destination state in transition definition {}",
-                        transition
-                    ));
+                    let dest_state = transition["dest_state"].as_str().expect(
+                        format!("invalid dest state in transition {}", transition).as_str(),
+                    );
                     let push_sequence = if transition["push_sequence"].is_string() {
                         Some(transition["push_sequence"].as_str().unwrap())
                     } else if transition["push_sequence"].is_null() {
                         None
                     } else {
-                        panic!(format!(
-                            "invalid push sequence in transition definition {}",
-                            transition
-                        ))
+                        panic!("invalid push sequence in transition {}", transition)
                     };
 
+                    /* Check transition fields */
                     if curr_state.len() != 1
                         || !states.contains(&curr_state.chars().nth(0).unwrap())
                     {
-                        panic!(format!(
-                            "unknown current state in transition definition {}",
-                            transition
-                        ));
+                        panic!("unknown curr state in transition {}", transition);
                     }
-                    if input.len() != 1 || input_symbols.contains(&input.chars().nth(0).unwrap()) {
-                        panic!(format!(
-                            "unknown input in transition definition {}",
-                            transition
-                        ));
+                    if input.len() != 1 || !input_symbols.contains(&input.chars().nth(0).unwrap()) {
+                        panic!("unknown input in transition {}", transition);
                     }
                     if let Some(t) = top {
-                        if t.len() != 1 || stack_symbols.contains(&t.chars().nth(0).unwrap()) {
-                            panic!(format!(
-                                "unknown stack top in transition definition {}",
-                                transition
-                            ))
+                        if t.len() != 1 || !stack_symbols.contains(&t.chars().nth(0).unwrap()) {
+                            panic!("unknown stack top in transition {}", transition)
                         }
                     };
                     if dest_state.len() != 1
                         || !states.contains(&dest_state.chars().nth(0).unwrap())
                     {
-                        panic!(format!(
-                            "unknown destination state in transition definition {}",
-                            transition
-                        ));
+                        panic!("unknown dest state in transition {}", transition);
                     };
                     if let Some(p) = push_sequence {
                         if p.chars().any(|c| !stack_symbols.contains(&c)) {
-                            panic!(format!(
-                                "unknown stack symbol in push sequence in transition definition {}",
+                            panic!(
+                                "unknown stack symbol in push sequence in transition {}",
                                 transition
-                            ))
+                            )
                         }
                     };
 
@@ -225,4 +206,14 @@ impl PdaRules {
             PdaStateType::NonAccepting
         }
     }
+}
+
+#[test]
+fn parsing_test() {
+    let json_script =
+        std::fs::read_to_string("D:/Workspace/VSCode/Rust/Projects/pushdown/resources/ab.json")
+            .expect("failed to read a file");
+
+    let rules = PdaRules::from_json(&json_script);
+    println!("rules {:?}", rules);
 }

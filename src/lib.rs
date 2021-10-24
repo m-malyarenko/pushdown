@@ -45,6 +45,7 @@ impl Pda {
 
     pub fn reset(&self) {
         self.curr_state.set(self.rules.start_state);
+        self.stack.borrow_mut().clear();
     }
 
     pub fn step(&self, input: char) -> Result<PdaStatus, PdaError> {
@@ -78,7 +79,7 @@ impl Pda {
         Ok((new_curr_state, self.rules.get_state_type(new_curr_state)))
     }
 
-    pub fn get_curr_state(&self) -> PdaStatus {
+    pub fn get_curr_status(&self) -> PdaStatus {
         (self.curr_state.get(), self.rules.get_state_type(self.curr_state.get()))
     }
 }
@@ -96,38 +97,38 @@ fn pushdown_test() {
     for input in input_string.chars() {
         pda.step(input).unwrap();
     }
-    assert_eq!(pda.get_curr_state().0, 'A');
-    assert!(matches!(pda.get_curr_state().1, PdaStateType::Accepting));
+    assert_eq!(pda.get_curr_status().0, 'A');
+    assert!(matches!(pda.get_curr_status().1, PdaStateType::Accepting));
 
     pda.reset();
     let input_string = "abb#";
     for input in input_string.chars() {
         pda.step(input).unwrap();
     }
-    assert_eq!(pda.get_curr_state().0, 'E');
-    assert!(matches!(pda.get_curr_state(), ('E', PdaStateType::NonAccepting)));
+    assert_eq!(pda.get_curr_status().0, 'E');
+    assert!(matches!(pda.get_curr_status(), ('E', PdaStateType::NonAccepting)));
 
     pda.reset();
     let input_string = "#";
     for input in input_string.chars() {
         pda.step(input).unwrap();
     }
-    assert_eq!(pda.get_curr_state().0, 'A');
-    assert!(matches!(pda.get_curr_state().1, PdaStateType::Accepting));
+    assert_eq!(pda.get_curr_status().0, 'A');
+    assert!(matches!(pda.get_curr_status().1, PdaStateType::Accepting));
 
     pda.reset();
     let input_string = "aabababb#";
     for input in input_string.chars() {
         pda.step(input).unwrap();
     }
-    assert_eq!(pda.get_curr_state().0, 'A');
-    assert!(matches!(pda.get_curr_state().1, PdaStateType::Accepting));
+    assert_eq!(pda.get_curr_status().0, 'A');
+    assert!(matches!(pda.get_curr_status().1, PdaStateType::Accepting));
 
     pda.reset();
     let input_string = "aabbbababb#";
     for input in input_string.chars() {
         pda.step(input).unwrap();
     }
-    assert_eq!(pda.get_curr_state().0, 'E');
-    assert!(matches!(pda.get_curr_state().1, PdaStateType::NonAccepting));
+    assert_eq!(pda.get_curr_status().0, 'E');
+    assert!(matches!(pda.get_curr_status().1, PdaStateType::NonAccepting));
 }
